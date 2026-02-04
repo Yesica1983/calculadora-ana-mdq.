@@ -14,6 +14,15 @@ st.markdown("""
     }
     .stTextInput>div>div>input { background-color: #111; color: #00f2fe; border: 1px solid #4facfe; }
     .stSelectbox>div>div>div { background-color: #111; color: white; }
+    /* Estilo para el precio gigante */
+    .precio-header {
+        text-align: center;
+        color: #00f2fe;
+        font-size: 3rem !important;
+        font-weight: bold;
+        text-shadow: 0px 0px 20px #00f2fe;
+        margin-bottom: 20px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -32,12 +41,12 @@ if not st.session_state["logueado"]:
     if st.button("DESBLOQUEAR"):
         if clave == "ana2026":
             st.session_state["logueado"] = True
-            st.session_state["generado"] = False # Limpia la sesión anterior al entrar
+            st.session_state["generado"] = False 
             st.rerun()
         else:
             st.error("Clave incorrecta")
 else:
-    # --- APP LIMPIA PARA EL CLIENTE ---
+    # --- APP PARA EL CLIENTE ---
     with st.sidebar:
         if st.button("CERRAR SESIÓN"):
             st.session_state["logueado"] = False
@@ -45,12 +54,11 @@ else:
             st.rerun()
 
     st.title("⚡ Calculadora de Presupuestos")
-    st.markdown("---")
-
+    
+    # --- LÓGICA DE CÁLCULO INSTANTÁNEO ---
     col1, col2 = st.columns(2)
     
     with col1:
-        # Usamos una clave (key) para que Streamlit sepa que es un campo nuevo cada vez
         cliente = st.text_input("Nombre del Cliente", placeholder="Ej: Marcos")
         servicio = st.selectbox("Tipo de Servicio", ["Landing Page", "E-commerce", "Web Corporativa", "App Python"])
     
@@ -58,7 +66,7 @@ else:
         paginas = st.slider("Cantidad de secciones", 1, 15, 1)
         descuento = st.toggle("¿Bonificación especial (10%)?")
 
-    # Lógica de precios (Pesos Argentinos)
+    # Precios
     precios = {
         "Landing Page": 150000, 
         "E-commerce": 500000, 
@@ -72,20 +80,22 @@ else:
 
     total_formateado = f"{total:,.0f}".replace(",", ".")
 
-    # BOTÓN PARA GENERAR
-    if st.button("🚀 GENERAR PRESUPUESTO"):
+    # --- MOSTRAR PRECIO EN TIEMPO REAL ---
+    st.markdown(f"<div class='precio-header'>TOTAL: ${total_formateado}</div>", unsafe_allow_html=True)
+    st.markdown("---")
+
+    # BOTÓN PARA GENERAR EFECTOS Y DESCARGA
+    if st.button("🚀 CONFIRMAR Y PREPARAR DESCARGA"):
         st.session_state["generado"] = True
         st.balloons()
         st.snow()
 
-    # Muestra el resultado y la descarga solo si se generó en ESTA sesión
+    # Muestra la descarga solo si presionó el botón
     if st.session_state["generado"]:
-        st.markdown(f"### 💰 Total a Presupuestar: **${total_formateado}**")
-        
         resumen = (f"PRESUPUESTO ANA MDQ\n"
-                   f"Cliente: {cliente}\n"
-                   f"Servicio: {servicio}\n"
-                   f"Total: ${total_formateado}")
+                    f"Cliente: {cliente}\n"
+                    f"Servicio: {servicio}\n"
+                    f"Total: ${total_formateado}")
         
         st.download_button(
             label="📥 CLIC PARA DESCARGAR .TXT",
