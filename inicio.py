@@ -66,4 +66,5 @@ st.download_button(
     data=resumen,
     file_name=f"Presupuesto_{cliente}.txt",
     mime="text/plain"
+
 )
