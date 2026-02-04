@@ -1,70 +1,97 @@
 import streamlit as st
-import time
 
-# 1. ESTILO Y CONFIGURACIÓN
+# 1. CONFIGURACIÓN DE PÁGINA Y ESTILO NEÓN
 st.set_page_config(page_title="Ana MDQ | Lab", page_icon="⚡")
 
 st.markdown("""
     <style>
     .stApp { background-color: #000000; color: #ffffff; }
     .stButton>button { 
-        width: 100%; border-radius: 15px; 
+        width: 100%; border-radius: 20px; 
         background: linear-gradient(45deg, #00f2fe 0%, #4facfe 100%);
-        color: white; font-weight: bold; height: 3.5em; border: none;
-        box-shadow: 0px 0px 15px #4facfe;
+        color: white; font-weight: bold; border: none;
+        box-shadow: 0px 0px 15px #00f2fe;
     }
-    input { background-color: #1a1a1a !important; color: #00f2fe !important; }
+    .stTextInput>div>div>input { background-color: #111; color: #00f2fe; border: 1px solid #4facfe; }
+    .stSelectbox>div>div>div { background-color: #111; color: white; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. INTERFAZ
-st.title("⚡ Ana MDQ | Soluciones")
-st.write("Calculadora de presupuestos interactiva")
+# --- INICIALIZACIÓN DE ESTADOS ---
+if "logueado" not in st.session_state:
+    st.session_state["logueado"] = False
+if "generado" not in st.session_state:
+    st.session_state["generado"] = False
 
-col1, col2 = st.columns(2)
-with col1:
-    cliente = st.text_input("Cliente", "Empresa X")
-with col2:
-    servicio = st.selectbox("Servicio", ["CV Web", "App Python", "E-commerce"])
+# --- PANTALLA DE LOGIN ---
+if not st.session_state["logueado"]:
+    st.title("🔐 Acceso Privado | Ana MDQ")
+    st.write("Ingresá para gestionar tus presupuestos.")
+    clave = st.text_input("Contraseña", type="password")
+    
+    if st.button("DESBLOQUEAR"):
+        if clave == "ana2026":
+            st.session_state["logueado"] = True
+            st.session_state["generado"] = False # Limpia la sesión anterior al entrar
+            st.rerun()
+        else:
+            st.error("Clave incorrecta")
+else:
+    # --- APP LIMPIA PARA EL CLIENTE ---
+    with st.sidebar:
+        if st.button("CERRAR SESIÓN"):
+            st.session_state["logueado"] = False
+            st.session_state["generado"] = False
+            st.rerun()
 
-precios = {"CV Web": 45000, "App Python": 95000, "E-commerce": 180000}
-monto = precios[servicio]
+    st.title("⚡ Calculadora de Presupuestos")
+    st.markdown("---")
 
-paginas = st.slider("Secciones extra", 1, 10, 1)
-total = monto + ((paginas - 1) * 5000)
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Usamos una clave (key) para que Streamlit sepa que es un campo nuevo cada vez
+        cliente = st.text_input("Nombre del Cliente", placeholder="Ej: Marcos")
+        servicio = st.selectbox("Tipo de Servicio", ["Landing Page", "E-commerce", "Web Corporativa", "App Python"])
+    
+    with col2:
+        paginas = st.slider("Cantidad de secciones", 1, 15, 1)
+        descuento = st.toggle("¿Bonificación especial (10%)?")
 
-desc = st.toggle("¿Bonificación Ana MDQ?")
-if desc: total *= 0.85
+    # Lógica de precios (Pesos Argentinos)
+    precios = {
+        "Landing Page": 150000, 
+        "E-commerce": 500000, 
+        "Web Corporativa": 350000, 
+        "App Python": 450000
+    }
+    
+    precio_base = precios[servicio]
+    total = precio_base + (paginas * 20000)
+    if descuento: total = total * 0.9
 
-st.markdown(f"<h1 style='text-align: center; color: #00f2fe;'>Total: ${total:,.2f}</h1>", unsafe_allow_html=True)
+    total_formateado = f"{total:,.0f}".replace(",", ".")
 
-# 3. GENERAR ARCHIVO DE TEXTO
-resumen = f"""
-PRESUPUESTO DIGITAL - ANA MDQ
-------------------------------
-Cliente: {cliente}
-Servicio: {servicio}
-Páginas: {paginas}
-Total Final: ${total:,.2f}
-------------------------------
-Gracias por confiar en tecnología Python.
-"""
+    # BOTÓN PARA GENERAR
+    if st.button("🚀 GENERAR PRESUPUESTO"):
+        st.session_state["generado"] = True
+        st.balloons()
+        st.snow()
 
-# 4. BOTONES FINALES
-if st.button("CALCULAR"):
-    barra = st.progress(0)
-    for p in range(100):
-        time.sleep(0.01)
-        barra.progress(p + 1)
-    st.snow()
-    st.balloons()
-    st.success("¡Cálculo finalizado!")
+    # Muestra el resultado y la descarga solo si se generó en ESTA sesión
+    if st.session_state["generado"]:
+        st.markdown(f"### 💰 Total a Presupuestar: **${total_formateado}**")
+        
+        resumen = (f"PRESUPUESTO ANA MDQ\n"
+                   f"Cliente: {cliente}\n"
+                   f"Servicio: {servicio}\n"
+                   f"Total: ${total_formateado}")
+        
+        st.download_button(
+            label="📥 CLIC PARA DESCARGAR .TXT",
+            data=resumen,
+            file_name=f"Presupuesto_{cliente}.txt",
+            mime="text/plain"
+        )
 
-# Botón para descargar
-st.download_button(
-    label="📥 DESCARGAR PRESUPUESTO",
-    data=resumen,
-    file_name=f"Presupuesto_{cliente}.txt",
-    mime="text/plain"
-
-)
+    st.info("Desarrollado por Ana MDQ")
